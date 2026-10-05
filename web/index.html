@@ -1,4 +1,23 @@
 <!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>法律证据保管</title>
 <style>body{font:16px system-ui;max-width:980px;margin:32px auto;padding:0 16px}select,input,button{padding:8px;margin:4px}pre{background:#f4f4f4;padding:12px;white-space:pre-wrap}.panel{border:1px solid #bbb;padding:16px;border-radius:8px}</style></head>
-<body><h1>法律证据保管与流转</h1><div class="panel"><select id="user"><option>custodian1</option><option>custodian2</option><option>analyst1</option><option>auditor1</option><option>outsider</option></select><input id="case" value="1"><button onclick="load()">生成保管报告</button></div><pre id="out"></pre>
-<script>async function load(){const r=await fetch(`/api/cases/${case.value}/report`,{headers:{"X-User-Id":user.value}});out.textContent=JSON.stringify(await r.json(),null,2)}</script></body></html>
+<body><h1>法律证据保管与流转 · 封存基线</h1>
+<div class="panel">
+  <select id="user"><option>custodian1</option><option>custodian2</option><option>analyst1</option><option selected>auditor1</option><option>outsider</option></select>
+  <input id="case" value="1">
+  <button onclick="load()">生成保管报告</button>
+  <button onclick="baselines()">查看基线清单</button>
+  <button onclick="seal()">审计员封存基线</button>
+</div><pre id="out"></pre>
+<script>
+async function api(method,path,body){
+  const r=await fetch(path,{method,headers:{"X-User-Id":user.value,"Content-Type":"application/json"},body:body?JSON.stringify(body):undefined});
+  return `${r.status} `+JSON.stringify(await r.json(),null,2);
+}
+async function load(){out.textContent=await api("GET",`/api/cases/${case.value}/report`)}
+async function baselines(){out.textContent=await api("GET",`/api/cases/${case.value}/baselines`)}
+async function seal(){
+  const raw=prompt("可选：所依据的最新基线编号（留空表示首封/无依据）","");
+  const baseline_no=raw?Number(raw):null;
+  out.textContent=await api("POST",`/api/cases/${case.value}/seal`,{baseline_no,note:"页面手动封存"});
+}
+</script></body></html>
